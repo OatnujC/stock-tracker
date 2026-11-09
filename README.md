@@ -58,3 +58,12 @@ Quotes may be delayed · Not financial advice.
 ## Enabling auto-refresh
 
 The updater script is `scripts/fetch_quotes.py`. A ready-to-use GitHub Actions workflow lives at `docs/github-actions-update-quotes.yml` (copy it to `.github/workflows/update-quotes.yml`). Creating workflow files needs the `workflow` OAuth scope on `gh`, which this environment did not have when the site was first published — enable it once in the repo (or re-auth `gh` with that scope), then quotes refresh about every 10 minutes.
+
+## Box refresh (cron substitute)
+
+GitHub Actions workflow push needs a `workflow` OAuth scope this environment lacks, so quotes are refreshed from the shared box by **supercronic** (crontab not available in the container image):
+
+- Crontab: `~/.config/stock-tracker/crontab` → every 5 minutes calls `scripts/refresh_and_push.sh`
+- Script self-gates to **weekdays 08:00–21:30 Europe/London** every 5 minutes, and **hourly** otherwise (nights/weekends, for crypto)
+- Uses `flock` on `.refresh.lock`; logs to `refresh.log`; commits `data: refresh` only when `data/market.json` changed
+- Start: `nohup ~/.config/stock-tracker/run-supercronic.sh &` — **does not auto-start after a box reboot** unless relaunched
