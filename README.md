@@ -65,7 +65,7 @@ The updater script is `scripts/fetch_quotes.py`. A ready-to-use GitHub Actions w
 
 GitHub Actions workflow push needs a `workflow` OAuth scope this environment lacks, so quotes are refreshed from the shared box by **supercronic** (crontab not available in the container image):
 
-- Crontab: `~/.config/stock-tracker/crontab` → every 15 minutes calls `scripts/refresh_and_push.sh`
+- Crontab: `~/.config/stock-tracker/crontab` → every 5 minutes calls `scripts/refresh_and_push.sh`
 - Script self-gates to **weekdays 08:00–21:30 Europe/London** every 5 minutes, and **hourly** otherwise (nights/weekends, for crypto)
 - Uses `flock` on `.refresh.lock`; logs to `refresh.log`; commits `data: refresh` only when `data/market.json` changed
 - Start: `nohup ~/.config/stock-tracker/run-supercronic.sh &` — **does not auto-start after a box reboot** unless relaunched
