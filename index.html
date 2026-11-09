@@ -3,329 +3,36 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#0b1018">
-  <meta name="description" content="JT's Book — a glanceable market dashboard with seven holdings and global market quotes via TradingView.">
-  <title>JT's Book</title>
-  <style>
-    :root { color-scheme: dark; --bg: #0b1018; --panel: #121a26; --border: #283448; --muted: #acb8ca; --text: #f3f6fc; --accent: #83e7c1; }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.5; }
-    a { color: var(--muted); text-underline-offset: 4px; }
-    a:hover { color: var(--text); }
-    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-    .skip-link { position: fixed; top: -100px; left: 16px; z-index: 20; padding: 12px; background: var(--panel); }
-    .skip-link:focus { top: 12px; }
-    .masthead { position: sticky; top: 0; z-index: 10; background: #0b1018f5; border-bottom: 1px solid var(--border); }
-    .header-inner { max-width: 1920px; margin: auto; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-    .brand { display: flex; align-items: center; gap: 16px; }
-    .monogram { display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid #3f685f; border-radius: 12px; color: var(--accent); font-size: 16px; font-weight: 750; letter-spacing: .04em; }
-    h1 { margin: 0; font-size: clamp(26px, 2.6vw, 40px); font-weight: 650; letter-spacing: -.04em; }
-    .status { text-align: right; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
-    .clock { color: var(--text); font-size: 19px; }
-    .status-line { display: flex; justify-content: flex-end; align-items: center; gap: 7px; margin-top: 2px; }
-    .dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: var(--accent); }
-    main { max-width: 1920px; margin: auto; padding: 26px 32px 32px; }
-    .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
-    h2 { font-size: 14px; letter-spacing: .14em; text-transform: uppercase; font-weight: 650; margin: 0; }
-    .section-note { font-size: 13px; color: var(--muted); margin: 0; }
-    .markets { margin-bottom: 32px; }
-    .tape { border: 1px solid var(--border); border-radius: 12px; background: var(--panel); overflow: hidden; min-height: 100px; padding-top: 8px; }
-    .overall { margin-bottom: 32px; }
-    .overall-panel { width: 100%; overflow: hidden; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; }
-    .overall-panel tv-advanced-chart { display: block; width: 100%; height: 560px; }
-    .holdings-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-    .holding { min-width: 0; padding: 20px 16px 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; }
-    .card-heading { min-height: 54px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 0 8px; }
-    h3 { margin: 0; font-size: clamp(18px, 1.5vw, 24px); font-weight: 600; line-height: 1.3; letter-spacing: -.025em; }
-    .exchange { padding-top: 4px; color: var(--muted); font-size: 11px; letter-spacing: .06em; }
-    .holding .tradingview-widget-container { min-height: 244px; width: 100%; }
-    .holding .tradingview-widget-container__widget { height: 220px; }
-    .tradingview-widget-copyright { padding: 4px 8px; font-size: 11px; line-height: 20px; }
-    .tradingview-widget-copyright a { text-decoration: none; }
-    .widget-help { margin: 20px 0 0; color: var(--muted); font-size: 13px; }
-    footer { max-width: 1920px; margin: auto; padding: 20px 32px 26px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-    footer p { margin: 0; }
-    @media (min-width: 1600px) { .holdings-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-    @media (max-width: 1100px) { .holdings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 640px) {
-      .header-inner { padding: 14px 16px; gap: 12px; }
-      .brand { gap: 10px; }
-      .monogram { display: none; }
-      .status { font-size: 11px; }
-      .clock { font-size: 15px; }
-      main { padding: 22px 16px; }
-      .holdings-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-      .section-heading { flex-wrap: wrap; gap: 6px; }
-      footer { padding: 20px 16px; }
-    }
-  </style>
+  <meta name="theme-color" content="#0b0f12">
+  <meta name="description" content="JT's personal market watchlist. Seven companies, a wider perspective.">
+  <title>JT's Book. — Your corner of the market.</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#holdings">Skip to holdings</a>
-  <header class="masthead">
-    <div class="header-inner">
-      <div class="brand"><span class="monogram" aria-hidden="true">JT</span><h1>JT's Book</h1></div>
-      <div class="status">
-        <div class="clock"><time id="clock">Local time</time></div>
-        <div class="status-line"><span class="dot" aria-hidden="true"></span><span>Page refreshed <time id="refreshed">on load</time></span></div>
-      </div>
-    </div>
-  </header>
-  <main>
-    <section class="markets" aria-labelledby="markets-title">
-      <div class="section-heading"><h2 id="markets-title">Around the markets</h2><p class="section-note">Indices · FX · Crypto · Commodities · Rates</p></div>
-      <div class="tape">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/markets/" rel="noopener noreferrer" target="_blank">Markets on TradingView</a></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
-{
-  "symbols": [
-    {
-      "proName": "AMEX:SPY",
-      "title": "S&P 500 ETF"
-    },
-    {
-      "proName": "NASDAQ:NDX",
-      "title": "Nasdaq 100"
-    },
-    {
-      "proName": "FOREXCOM:UKXGBP",
-      "title": "FTSE 100"
-    },
-    {
-      "proName": "FX:GBPUSD",
-      "title": "GBP / USD"
-    },
-    {
-      "proName": "BITSTAMP:BTCUSD",
-      "title": "Bitcoin"
-    },
-    {
-      "proName": "TVC:GOLD",
-      "title": "Gold"
-    },
-    {
-      "proName": "TVC:UKOIL",
-      "title": "Brent crude"
-    },
-    {
-      "proName": "TVC:US10Y",
-      "title": "US 10Y"
-    }
-  ],
-  "showSymbolLogo": true,
-  "colorTheme": "dark",
-  "isTransparent": true,
-  "displayMode": "adaptive",
-  "locale": "en"
-}
-          </script>
-        </div>
-      </div>
-    </section>
-    <section class="overall" aria-labelledby="overall-title" aria-describedby="overall-note">
-      <div class="section-heading"><h2 id="overall-title">Overall</h2><p class="section-note" id="overall-note">The book, % change, equal footing — not your actual weights</p></div>
-      <div class="overall-panel">
-        <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-advanced-chart.js"></script>
-        <tv-advanced-chart
-          symbol="NASDAQ:PLTR"
-          interval="D"
-          range="1M"
-          theme="dark"
-          style="2"
-          hide-top-toolbar="false"
-          hide-legend="false"
-          compare-symbols='[{"symbol":"NASDAQ:AMD"},{"symbol":"NYSE:BBAI"},{"symbol":"TSXV:PNG"},{"symbol":"NASDAQ:AAPL"},{"symbol":"NYSE:BB"},{"symbol":"NASDAQ:ICLN"}]'
-        ></tv-advanced-chart>
-        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/NASDAQ-PLTR/" rel="noopener noreferrer" target="_blank">Advanced chart on TradingView</a></div>
-      </div>
-    </section>
-    <section id="holdings" aria-labelledby="holdings-title">
-      <div class="section-heading"><h2 id="holdings-title">The book <span aria-label="7 holdings">/ 07</span></h2><p class="section-note">Price &amp; daily move · 1-day charts</p></div>
-      <div class="holdings-grid">
-      <article class="holding" aria-labelledby="name-pltr">
-        <div class="card-heading"><h3 id="name-pltr">Palantir</h3><span class="exchange">NASDAQ</span></div>
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/NASDAQ-PLTR/" rel="noopener noreferrer" target="_blank">PLTR on TradingView</a></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-{
-  "symbol": "NASDAQ:PLTR",
-  "width": "100%",
-  "height": 220,
-  "locale": "en",
-  "dateRange": "1D",
-  "colorTheme": "dark",
-  "isTransparent": true,
-  "autosize": false,
-  "largeChartUrl": "",
-  "chartOnly": false,
-  "noTimeScale": false
-}
-          </script>
-        </div>
-      </article>
-      <article class="holding" aria-labelledby="name-amd">
-        <div class="card-heading"><h3 id="name-amd">AMD</h3><span class="exchange">NASDAQ</span></div>
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/NASDAQ-AMD/" rel="noopener noreferrer" target="_blank">AMD on TradingView</a></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-{
-  "symbol": "NASDAQ:AMD",
-  "width": "100%",
-  "height": 220,
-  "locale": "en",
-  "dateRange": "1D",
-  "colorTheme": "dark",
-  "isTransparent": true,
-  "autosize": false,
-  "largeChartUrl": "",
-  "chartOnly": false,
-  "noTimeScale": false
-}
-          </script>
-        </div>
-      </article>
-      <article class="holding" aria-labelledby="name-bbai">
-        <div class="card-heading"><h3 id="name-bbai">BigBear.ai</h3><span class="exchange">NYSE</span></div>
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/NYSE-BBAI/" rel="noopener noreferrer" target="_blank">BBAI on TradingView</a></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-{
-  "symbol": "NYSE:BBAI",
-  "width": "100%",
-  "height": 220,
-  "locale": "en",
-  "dateRange": "1D",
-  "colorTheme": "dark",
-  "isTransparent": true,
-  "autosize": false,
-  "largeChartUrl": "",
-  "chartOnly": false,
-  "noTimeScale": false
-}
-          </script>
-        </div>
-      </article>
-      <article class="holding" aria-labelledby="name-png">
-        <div class="card-heading"><h3 id="name-png">Kraken Robotics</h3><span class="exchange">TSXV</span></div>
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/TSXV-PNG/" rel="noopener noreferrer" target="_blank">PNG on TradingView</a></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-{
-  "symbol": "TSXV:PNG",
-  "width": "100%",
-  "height": 220,
-  "locale": "en",
-  "dateRange": "1D",
-  "colorTheme": "dark",
-  "isTransparent": true,
-  "autosize": false,
-  "largeChartUrl": "",
-  "chartOnly": false,
-  "noTimeScale": false
-}
-          </script>
-        </div>
-      </article>
-      <article class="holding" aria-labelledby="name-aapl">
-        <div class="card-heading"><h3 id="name-aapl">Apple</h3><span class="exchange">NASDAQ</span></div>
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/NASDAQ-AAPL/" rel="noopener noreferrer" target="_blank">AAPL on TradingView</a></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-{
-  "symbol": "NASDAQ:AAPL",
-  "width": "100%",
-  "height": 220,
-  "locale": "en",
-  "dateRange": "1D",
-  "colorTheme": "dark",
-  "isTransparent": true,
-  "autosize": false,
-  "largeChartUrl": "",
-  "chartOnly": false,
-  "noTimeScale": false
-}
-          </script>
-        </div>
-      </article>
-      <article class="holding" aria-labelledby="name-bb">
-        <div class="card-heading"><h3 id="name-bb">BlackBerry</h3><span class="exchange">NYSE</span></div>
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/NYSE-BB/" rel="noopener noreferrer" target="_blank">BB on TradingView</a></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-{
-  "symbol": "NYSE:BB",
-  "width": "100%",
-  "height": 220,
-  "locale": "en",
-  "dateRange": "1D",
-  "colorTheme": "dark",
-  "isTransparent": true,
-  "autosize": false,
-  "largeChartUrl": "",
-  "chartOnly": false,
-  "noTimeScale": false
-}
-          </script>
-        </div>
-      </article>
-      <article class="holding" aria-labelledby="name-icln">
-        <div class="card-heading"><h3 id="name-icln">iShares Global Clean Energy ETF</h3><span class="exchange">NASDAQ</span></div>
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/NASDAQ-ICLN/" rel="noopener noreferrer" target="_blank">ICLN on TradingView</a></div>
-          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
-{
-  "symbol": "NASDAQ:ICLN",
-  "width": "100%",
-  "height": 220,
-  "locale": "en",
-  "dateRange": "1D",
-  "colorTheme": "dark",
-  "isTransparent": true,
-  "autosize": false,
-  "largeChartUrl": "",
-  "chartOnly": false,
-  "noTimeScale": false
-}
-          </script>
-        </div>
-      </article>
-      </div>
-      <p class="widget-help">If a chart is unavailable, open its TradingView link below. An internet connection is required.</p>
-      <noscript><p>Enable JavaScript to load TradingView prices and charts. The links below each holding also open on TradingView.</p></noscript>
-    </section>
-  </main>
-  <footer>
-    <p>Quotes may be delayed. This is not financial advice. Data via TradingView.</p>
-    <p>Page auto-refreshes every 5 minutes · Clock in your local time</p>
-  </footer>
-  <script>
-    (() => {
-      const clock = document.getElementById('clock');
-      const refreshed = document.getElementById('refreshed');
-      const format = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-      const loadedAt = new Date();
-      refreshed.dateTime = loadedAt.toISOString();
-      refreshed.textContent = format.format(loadedAt);
-      function tick() {
-        const now = new Date();
-        clock.dateTime = now.toISOString();
-        clock.textContent = format.format(now);
-        clock.title = now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      }
-      tick();
-      setInterval(tick, 1000);
-      setTimeout(() => window.location.reload(), 5 * 60 * 1000);
-    })();
-  </script>
+  <div class="shell">
+    <header class="header">
+      <div class="brand"><div class="logo" aria-hidden="true">JT</div><div><h1>JT's Book<span>.</span></h1><p>Your corner of the market.</p></div></div>
+      <div class="clock-wrap"><span class="live-dot" aria-hidden="true"></span><span class="live-label">LIVE CLOCK</span><time id="clock">— GMT</time></div>
+    </header>
+    <main>
+      <section class="markets-section" aria-labelledby="markets-title">
+        <div class="section-heading"><h2 id="markets-title">Around the markets</h2><span class="eyebrow">The wider picture</span></div>
+        <div id="markets" class="markets-grid" aria-busy="true"></div>
+      </section>
+      <section class="overall-panel" aria-labelledby="overall-title">
+        <div class="overall-heading"><div><div class="eyebrow">A little perspective</div><h2 id="overall-title">Overall<span>.</span></h2><p>The book, % change, equal footing — not your actual weights</p></div><span class="period">1 MONTH</span></div>
+        <div id="overall-chart" class="overall-chart">—</div>
+        <div id="legend" class="legend" aria-label="Chart legend"></div>
+      </section>
+      <section class="watchlist-section" aria-labelledby="watchlist-title">
+        <div class="section-heading watchlist-heading"><div class="heading-group"><h2 id="watchlist-title">The watchlist</h2><span class="count">07</span></div><span class="intraday"><span></span> Intraday · 1 day</span></div>
+        <div id="watchlist" class="watchlist-grid" aria-busy="true"></div>
+      </section>
+      <p id="data-status" class="data-status" role="status">Loading market data…</p>
+      <noscript><p>JavaScript is required to load quotes and charts. —</p></noscript>
+    </main>
+    <footer><div><strong>JT's Book.</strong><span>Quotes may be delayed · Not financial advice</span></div><p>Data via Yahoo Finance · GitHub Actions ~every 10 min<br>Page reloads every 5 min · All times GMT</p></footer>
+  </div>
 </body>
 </html>
