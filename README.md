@@ -20,7 +20,7 @@ To publish, push these files to the repository and enable GitHub Pages from the 
 
 ## Markets strip
 
-`SP:SPX`, `NASDAQ:NDX`, `INDEX:UKX`, `FX:GBPUSD`, `BITSTAMP:BTCUSD`, `TVC:GOLD`, `TVC:UKOIL`, `TVC:US10Y`
+`FOREXCOM:SPXUSD`, `NASDAQ:NDX`, `FOREXCOM:UKXGBP`, `FX:GBPUSD`, `BITSTAMP:BTCUSD`, `TVC:GOLD`, `TVC:UKOIL`, `TVC:US10Y`
 
 Quotes may be delayed, and availability depends on TradingView and the exchange. Widgets may show an unavailable-symbol message where a feed is unsupported. No share counts, weights, or holding values are shown. This is not financial advice. Data via TradingView.
 
