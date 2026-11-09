@@ -1,2 +1,7 @@
 screenshot.png
 design/mockup-candidate.png
+.gh-pages-worktree/
+.refresh.lock
+refresh.log
+screenshot*.png
+scripts/__pycache__/

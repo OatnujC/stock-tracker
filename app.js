@@ -244,7 +244,7 @@ $('clear-selection').addEventListener('click',()=>{
 window.addEventListener('hashchange',readSelection);
 function clockTick() { $('clock').textContent=`${gmt(new Date())} GMT`; }
 clockTick(); setInterval(clockTick,1000); setTimeout(()=>window.location.reload(),5*60*1000);
-async function fetchJSON(path) { const response=await fetch(path,{cache:'no-store'}); if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`); return response.json(); }
+async function fetchJSON(path) { const url=`${path}${path.includes('?')?'&':'?'}t=${Date.now()}`; const response=await fetch(url,{cache:'no-store'}); if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`); return response.json(); }
 async function load() {
   const results=await Promise.allSettled([fetchJSON('holdings.json'),fetchJSON('data/market.json')]);
   const errors=[];
