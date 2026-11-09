@@ -31,6 +31,9 @@
     .section-note { font-size: 13px; color: var(--muted); margin: 0; }
     .markets { margin-bottom: 32px; }
     .tape { border: 1px solid var(--border); border-radius: 12px; background: var(--panel); overflow: hidden; min-height: 100px; padding-top: 8px; }
+    .overall { margin-bottom: 32px; }
+    .overall-panel { width: 100%; overflow: hidden; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; }
+    .overall-panel tv-advanced-chart { display: block; width: 100%; height: 560px; }
     .holdings-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
     .holding { min-width: 0; padding: 20px 16px 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; }
     .card-heading { min-height: 54px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 0 8px; }
@@ -80,8 +83,8 @@
 {
   "symbols": [
     {
-      "proName": "FOREXCOM:SPXUSD",
-      "title": "S&P 500"
+      "proName": "AMEX:SPY",
+      "title": "S&P 500 ETF"
     },
     {
       "proName": "NASDAQ:NDX",
@@ -120,6 +123,23 @@
 }
           </script>
         </div>
+      </div>
+    </section>
+    <section class="overall" aria-labelledby="overall-title" aria-describedby="overall-note">
+      <div class="section-heading"><h2 id="overall-title">Overall</h2><p class="section-note" id="overall-note">The book, % change, equal footing — not your actual weights</p></div>
+      <div class="overall-panel">
+        <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-advanced-chart.js"></script>
+        <tv-advanced-chart
+          symbol="NASDAQ:PLTR"
+          interval="D"
+          range="1M"
+          theme="dark"
+          style="2"
+          hide-top-toolbar="false"
+          hide-legend="false"
+          compare-symbols='[{"symbol":"NASDAQ:AMD"},{"symbol":"NYSE:BBAI"},{"symbol":"TSXV:PNG"},{"symbol":"NASDAQ:AAPL"},{"symbol":"NYSE:BB"},{"symbol":"NASDAQ:ICLN"}]'
+        ></tv-advanced-chart>
+        <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/NASDAQ-PLTR/" rel="noopener noreferrer" target="_blank">Advanced chart on TradingView</a></div>
       </div>
     </section>
     <section id="holdings" aria-labelledby="holdings-title">
