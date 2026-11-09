@@ -20,8 +20,7 @@ let range = stored('jt-range', '30D');
 if (!RANGES.includes(range)) range = '30D';
 let view = stored('jt-view', 'Combined');
 if (!['Combined', 'All'].includes(view)) view = 'Combined';
-const savedHidden = stored('jt-hidden', []);
-const hidden = new Set(Array.isArray(savedHidden) ? savedHidden : []);
+const selected = new Set();
 let config = {baseCurrency:'GBP', holdings:[]}, market = {};
 
 function rangeSeries(quote) {
@@ -86,7 +85,7 @@ function renderCards() {
     const q=market.holdings?.[h.key], series=rangeSeries(q), pct=returnOf(q,series), label=`${range} ${pctLabel(pct)}`;
     const currency=h.currency || q?.currency || 'USD';
     const price=valid(q?.price) ? `${currency==='CAD'?'C$':currency==='USD'?'$':currency==='GBP'?'£':''}${number(q.price)}` : '—';
-    return `<article class="stock-card"><div class="card-top"><span class="ticker">${escapeHTML(h.symbol || h.key)}</span><span class="exchange">${escapeHTML(h.exchange)}</span></div><h3 class="company">${escapeHTML(h.name)}</h3><div class="quote-row"><div><span class="price">${price}</span><span class="currency">${escapeHTML(currency)}</span></div><span class="pill ${tone(pct)}">${label}</span></div><div class="sparkline">${sparkline(q,series,h.key)}</div><div class="card-footer"><span class="${tone(pct)}">${label}</span><a href="https://www.tradingview.com/symbols/${encodeURIComponent((h.tv || h.symbol || h.key).replace(':','-'))}/" target="_blank" rel="noopener noreferrer" aria-label="${escapeHTML(h.name)} on TradingView (opens in a new tab)">TradingView ↗</a></div></article>`;
+    return `<article class="stock-card${selected.has(h.key)?' selected':''}" data-key="${escapeHTML(h.key)}" tabindex="0" role="button" aria-pressed="${selected.has(h.key)}" aria-label="${escapeHTML(h.symbol || h.key)}: ${escapeHTML(h.name)}"><span class="selection-check" aria-hidden="true">✓</span><div class="card-top"><span class="ticker">${escapeHTML(h.symbol || h.key)}</span><span class="exchange">${escapeHTML(h.exchange)}</span></div><h3 class="company">${escapeHTML(h.name)}</h3><div class="quote-row"><div><span class="price">${price}</span><span class="currency">${escapeHTML(currency)}</span></div><span class="pill ${tone(pct)}">${label}</span></div><div class="sparkline">${sparkline(q,series,h.key)}</div><div class="card-footer"><span class="${tone(pct)}">${label}</span><a href="https://www.tradingview.com/symbols/${encodeURIComponent((h.tv || h.symbol || h.key).replace(':','-'))}/" target="_blank" rel="noopener noreferrer" aria-label="${escapeHTML(h.name)} on TradingView (opens in a new tab)">TradingView ↗</a></div></article>`;
   }).join('');
   $('watchlist').setAttribute('aria-busy','false');
 }
@@ -107,10 +106,12 @@ function book() {
     }
     return {key:h.key,color:COLORS[i%COLORS.length],shares:h.shares,initial,values,series:values.map(p=>({t:p.t,c:(p.c/initial-1)*100}))};
   });
-  const available=lines.filter(l=>l.series.length);
+  const holdings=config.holdings.filter(h=>!selected.size || selected.has(h.key));
+  const basket=lines.filter(l=>!selected.size || selected.has(l.key));
+  const available=basket.filter(l=>l.series.length);
   let combined=[];
   // Keep a fixed basket throughout the plot; unavailable constituents are disclosed.
-  if (available.length && (!weighted || available.length===lines.length)) {
+  if (available.length && (!weighted || available.length===basket.length)) {
     const start=Math.max(...available.map(l=>l.series[0].t));
     const end=Math.max(...available.map(l=>l.series.at(-1).t));
     const times=[...new Set(available.flatMap(l=>l.series.map(p=>p.t)))].filter(t=>t>=start && t<=end).sort((a,b)=>a-b);
@@ -119,14 +120,16 @@ function book() {
   }
   let total=null;
   if (weighted) {
-    const values=config.holdings.map(h=>convert(market.holdings?.[h.key]?.price,h.currency || market.holdings?.[h.key]?.currency || 'USD',target,0,'latest'));
-    if (values.every(positive)) total=values.reduce((sum,v,i)=>sum+v*config.holdings[i].shares,0);
+    const values=holdings.map(h=>convert(market.holdings?.[h.key]?.price,h.currency || market.holdings?.[h.key]?.currency || 'USD',target,0,'latest'));
+    if (values.every(positive)) total=values.reduce((sum,v,i)=>sum+v*holdings[i].shares,0);
   }
-  return {weighted,target,lines,combined,total,fallback,available:available.length};
+  return {weighted,target,lines,combined,total,fallback:fallback.filter(key=>!selected.size || selected.has(key)),available:available.length,count:basket.length};
 }
 function renderOverall() {
   const b=book(), result=b.combined.at(-1)?.c;
-  $('overall-subtitle').textContent=`${range} · The whole book · ${b.target} returns`;
+  const label=selected.size ? `Selected: ${[...selected].join(', ')} (${selected.size})` : 'The whole book';
+  $('overall-subtitle').textContent=`${range} · ${label} · ${b.target} returns`;
+  $('clear-selection').hidden=!selected.size;
   $('overall-headline').className=`overall-headline ${tone(result)}`;
   $('overall-headline').textContent=pctLabel(result);
   if (b.weighted) {
@@ -136,14 +139,14 @@ function renderOverall() {
   }
   $('weighting-note').textContent=b.weighted ? `Value-weighted in ${b.target} — based on shares in holdings.json; fixed share counts over the selected range` : 'Equal-weighted — add share counts in holdings.json for your real mix';
   const notes=[];
-  if (b.available<b.lines.length) notes.push(`${b.available}/${b.lines.length} holdings have usable ${range} history${b.weighted?'; Combined requires all holdings':'; equal-weighted over available holdings'}.`);
+  if (b.available<b.count) notes.push(`${b.available}/${b.count} holdings have usable ${range} history${b.weighted?'; Combined requires all holdings':'; equal-weighted over available holdings'}.`);
   if (b.fallback.length) notes.push(`FX missing for ${b.fallback.join(', ')}: using native % returns.`);
   if (b.weighted && !valid(b.total)) notes.push('Total value unavailable: missing quote or FX.');
   notes.push('Historical FX uses the last available daily rate.');
   $('coverage-note').textContent=notes.join(' ');
   $('legend').hidden=view!=='All';
-  $('legend').innerHTML=view==='All' ? b.lines.map(l=>`<button type="button" class="legend-item" data-key="${escapeHTML(l.key)}" aria-pressed="${!hidden.has(l.key)}"><span class="legend-dot" style="--line:${l.color}"></span>${escapeHTML(l.key)}<span class="legend-return">${pctLabel(l.series.at(-1)?.c)}</span></button>`).join('') : '';
-  drawChart(view==='Combined' ? [{key:'Combined',color:tone(result)==='negative'?'#f43f5e':'#2dd4bf',series:b.combined}] : b.lines.filter(l=>!hidden.has(l.key)));
+  $('legend').innerHTML=view==='All' ? b.lines.map(l=>`<button type="button" class="legend-item" data-key="${escapeHTML(l.key)}" aria-pressed="${!selected.size || selected.has(l.key)}"><span class="legend-dot" style="--line:${l.color}"></span>${escapeHTML(l.key)}<span class="legend-return">${pctLabel(l.series.at(-1)?.c)}</span></button>`).join('') : '';
+  drawChart(view==='Combined' ? [{key:'Combined',color:tone(result)==='negative'?'#f43f5e':'#2dd4bf',series:b.combined}] : b.lines.filter(l=>!selected.size || selected.has(l.key)));
 }
 function drawChart(lines) {
   const all=lines.flatMap(l=>l.series);
@@ -189,7 +192,56 @@ function render() {
 }
 $('range-controls').addEventListener('click',event=>{ const value=event.target.closest('[data-range]')?.dataset.range; if (RANGES.includes(value)) { range=value; save('jt-range',range); render(); } });
 $('view-controls').addEventListener('click',event=>{ const value=event.target.closest('[data-view]')?.dataset.view; if (['Combined','All'].includes(value)) { view=value; save('jt-view',view); renderOverall(); document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view))); } });
-$('legend').addEventListener('click',event=>{ const key=event.target.closest('[data-key]')?.dataset.key; if (key) { if (hidden.has(key)) hidden.delete(key); else hidden.add(key); save('jt-hidden',[...hidden]); renderOverall(); } });
+// Update card state in place so keyboard focus survives selection changes.
+function selectionChanged() {
+  document.querySelectorAll('.stock-card').forEach(card=>{
+    const active=selected.has(card.dataset.key);
+    card.classList.toggle('selected',active);
+    card.setAttribute('aria-pressed',String(active));
+  });
+  renderOverall();
+}
+function writeSelection() {
+  const params=new URLSearchParams(window.location.hash.slice(1));
+  if (selected.size) params.set('sel',[...selected].join(',')); else params.delete('sel');
+  const hash=params.toString().replace(/%2C/gi,',');
+  window.history.replaceState(null,'',`${window.location.pathname}${window.location.search}${hash?'#'+hash:''}`);
+}
+function readSelection() {
+  const keys=new Set(config.holdings.map(h=>h.key));
+  const value=new URLSearchParams(window.location.hash.slice(1)).get('sel') || '';
+  selected.clear();
+  value.split(',').forEach(key=>{ if (keys.has(key)) selected.add(key); });
+  selectionChanged();
+}
+function toggleSelection(key) {
+  if (selected.has(key)) selected.delete(key); else selected.add(key);
+  writeSelection();
+  selectionChanged();
+}
+$('watchlist').addEventListener('click',event=>{
+  if (event.target.closest('a')) { event.stopPropagation(); return; }
+  const card=event.target.closest('.stock-card');
+  if (card) toggleSelection(card.dataset.key);
+});
+$('watchlist').addEventListener('keydown',event=>{
+  if (!event.target.matches('.stock-card') || !['Enter',' '].includes(event.key)) return;
+  event.preventDefault();
+  if (!event.repeat) toggleSelection(event.target.dataset.key);
+});
+$('legend').addEventListener('click',event=>{
+  const key=event.target.closest('[data-key]')?.dataset.key;
+  if (!key) return;
+  // With no explicit selection all lines are visible; hide the clicked line.
+  if (!selected.size) config.holdings.forEach(h=>selected.add(h.key));
+  toggleSelection(key);
+  [...$('legend').querySelectorAll('[data-key]')].find(button=>button.dataset.key===key)?.focus();
+});
+$('clear-selection').addEventListener('click',()=>{
+  selected.clear(); writeSelection(); selectionChanged();
+  document.querySelector(`[data-view="${view}"]`).focus();
+});
+window.addEventListener('hashchange',readSelection);
 function clockTick() { $('clock').textContent=`${gmt(new Date())} GMT`; }
 clockTick(); setInterval(clockTick,1000); setTimeout(()=>window.location.reload(),5*60*1000);
 async function fetchJSON(path) { const response=await fetch(path,{cache:'no-store'}); if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`); return response.json(); }
@@ -198,6 +250,7 @@ async function load() {
   const errors=[];
   if (results[0].status==='fulfilled' && Array.isArray(results[0].value?.holdings)) config=results[0].value; else errors.push('Holdings configuration unavailable');
   if (results[1].status==='fulfilled' && results[1].value?.schemaVersion===2) market=results[1].value; else errors.push('Market data unavailable');
+  readSelection();
   render();
   const updated=new Date(market.updatedAt);
   $('data-status').textContent=errors.length ? `${errors.join(' · ')} — · The page will retry in 5 minutes.` : `${Number.isNaN(updated.getTime())?'Quote update time —':`Data updated ${dateLabel(updated.getTime()/1000)} ${updated.getUTCFullYear()} at ${gmt(updated)} GMT`} · Missing data shown as —`;
