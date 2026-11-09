@@ -20,19 +20,26 @@
         <div class="section-heading"><h2 id="markets-title">Around the markets</h2><span class="eyebrow">The wider picture</span></div>
         <div id="markets" class="markets-grid" aria-busy="true"></div>
       </section>
+      <div class="range-toolbar"><span class="eyebrow">Your time horizon</span><div id="range-controls" class="segmented" role="group" aria-label="Time range">
+        <button type="button" data-range="1D">1D</button><button type="button" data-range="5D">5D</button><button type="button" data-range="14D">14D</button><button type="button" data-range="30D" aria-pressed="true">30D</button><button type="button" data-range="365D">365D</button><button type="button" data-range="YTD">YTD</button>
+      </div></div>
       <section class="overall-panel" aria-labelledby="overall-title">
-        <div class="overall-heading"><div><div class="eyebrow">A little perspective</div><h2 id="overall-title">Overall<span>.</span></h2><p>The book, % change, equal footing — not your actual weights</p></div><span class="period">1 MONTH</span></div>
+        <div class="overall-heading"><div><div class="eyebrow">A little perspective</div><h2 id="overall-title">Overall<span>.</span></h2><p id="overall-subtitle">30D · The whole book</p></div><div id="view-controls" class="segmented" role="group" aria-label="Overall view"><button type="button" data-view="Combined" aria-pressed="true">Combined</button><button type="button" data-view="All">All</button></div></div>
+        <div id="overall-headline" class="overall-headline neutral" aria-live="polite">—</div>
+        <p id="weighting-note" class="weighting-note"></p>
+        <p id="coverage-note" class="weighting-note"></p>
         <div id="overall-chart" class="overall-chart">—</div>
+        <div id="chart-readout" class="chart-readout" aria-live="off">Hover or focus the chart to inspect returns.</div>
         <div id="legend" class="legend" aria-label="Chart legend"></div>
       </section>
       <section class="watchlist-section" aria-labelledby="watchlist-title">
-        <div class="section-heading watchlist-heading"><div class="heading-group"><h2 id="watchlist-title">The watchlist</h2><span class="count">07</span></div><span class="intraday"><span></span> Intraday · 1 day</span></div>
+        <div class="section-heading watchlist-heading"><div class="heading-group"><h2 id="watchlist-title">The watchlist</h2><span id="holding-count" class="count">07</span></div><span id="watchlist-period" class="intraday">30D · Daily closes</span></div>
         <div id="watchlist" class="watchlist-grid" aria-busy="true"></div>
       </section>
       <p id="data-status" class="data-status" role="status">Loading market data…</p>
       <noscript><p>JavaScript is required to load quotes and charts. —</p></noscript>
     </main>
-    <footer><div><strong>JT's Book.</strong><span>Quotes may be delayed · Not financial advice</span></div><p>Data via Yahoo Finance · GitHub Actions ~every 10 min<br>Page reloads every 5 min · All times GMT</p></footer>
+    <footer><div><strong>JT's Book.</strong><span>Quotes may be delayed · Not financial advice</span></div><p>Data via Yahoo Finance · Refresh schedule: see README<br>Page reloads every 5 min · All times GMT</p></footer>
   </div>
 </body>
 </html>

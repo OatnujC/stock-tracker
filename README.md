@@ -2,7 +2,7 @@
 
 A custom dark market dashboard: https://oatnujc.github.io/stock-tracker/
 
-Pure static HTML, CSS and JavaScript. No npm, build step, API keys or embedded TradingView widgets. The page includes an eight-cell markets grid, a one-month comparison chart and seven watchlist cards, with Palantir as the hero. TradingView links open external symbol pages.
+Pure static HTML, CSS and JavaScript. No npm, build step, API keys or embedded TradingView widgets. The page includes an eight-cell markets grid, a Combined/All performance chart and seven uniform watchlist cards. TradingView links open external symbol pages.
 
 ## Run locally
 
@@ -10,9 +10,9 @@ Serve the repository with `python3 -m http.server 8000`, then open http://localh
 
 ## Data and refresh
 
-The UI reads the relative file `data/market.json`. GitHub Actions runs `scripts/fetch_quotes.py` approximately every 10 minutes using Yahoo Finance's unofficial chart API, then commits and pushes changed JSON. The workflow also supports **Run workflow** (`workflow_dispatch`). It uses the standard GitHub Actions token with `contents: write`; no custom secrets are needed.
+The UI reads `holdings.json` and the relative file `data/market.json`. GitHub Actions runs `scripts/fetch_quotes.py` approximately every 10 minutes using Yahoo Finance's unofficial chart API, then commits and pushes changed JSON. The workflow also supports **Run workflow** (`workflow_dispatch`). It uses the standard GitHub Actions token with `contents: write`; no custom secrets are needed.
 
-The script uses Python's standard library and sends a User-Agent. Run it manually with `python3 scripts/fetch_quotes.py`. It fetches one day of five-minute bars for holdings and markets, plus one month of daily history for holdings. The JSON has `updatedAt`, `source`, `holdings`, `markets` and `history`; each series contains `{t, c}` Unix-second timestamps and closes. PNG uses CAD; the other holdings use USD.
+The script uses Python's standard library and sends a User-Agent. Run it manually with `python3 scripts/fetch_quotes.py`. Schema version 2 provides `holdings.*.intraday1d`, `intraday5d`, `daily1y`, market quotes and `fx` history; each series contains `{t, c}` Unix-second timestamps and closes. PNG uses CAD; the other holdings use USD.
 
 Failed requests produce null quote fields and empty series, displayed as **—**, never fabricated prices. If every request fails, the script exits with an error and preserves the existing file. The page displays the data update timestamp; its live GMT clock is separate from quote freshness. The page reloads every five minutes. All displayed dates and times use GMT (UTC), including during British Summer Time.
 
@@ -43,7 +43,11 @@ Quotes may be delayed. GitHub schedules can run late or be disabled for inactive
 
 ## Charts
 
-Custom SVG sparklines use intraday closes and a dashed prior-close baseline. Daily changes compare the quote with its prior close. The overall chart rebases each holding's own first available monthly close to 0% and plots percentage changes in its native currency. The seven lines are on equal footing — not actual portfolio weights or a portfolio return. No share counts, weights or foreign exchange conversions are assumed. Missing histories remain unavailable in the legend.
+Range pills select **1D, 5D, 14D, 30D, 365D or YTD** (default 30D, remembered locally). 1D/5D use intraday histories; longer ranges slice daily history, with YTD starting January 1 UTC. Every card has the same size, price styling and sparkline height. Card returns use native currency and the first selected point, or prior close for 1D; the dashed sparkline marks that baseline.
+
+**Combined** defaults to the equal-weighted average of available USD percentage returns. CAD prices are divided by `USDCAD=X`; missing FX falls back to native percentage returns with a visible note. **All** plots seven coloured return lines with saved legend toggles and pointer/keyboard readouts. Missing histories remain unavailable. Daily FX is carried forward from the last observed rate; coverage notes disclose unavailable holdings.
+
+Add numeric, nonnegative `shares` for every entry in `holdings.json` to enable value-weighted Combined returns and total value in `baseCurrency` (GBP by default; USD and CAD also supported). Partial share counts keep equal weighting. Value weighting assumes fixed shares throughout the selected period and needs complete price/FX history; missing current prices or FX show total value as **—**. Ranges, view and legend choices persist in localStorage when available.
 
 ## Publish
 

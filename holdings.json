@@ -1,0 +1,13 @@
+{
+  "baseCurrency": "GBP",
+  "note": "Optional shares: if set for every holding, Combined uses value-weighting in baseCurrency. Leave null/omit for equal-weight % book.",
+  "holdings": [
+    {"key": "PLTR", "symbol": "PLTR", "yahoo": "PLTR", "name": "Palantir", "exchange": "NASDAQ", "currency": "USD", "tv": "NASDAQ:PLTR", "shares": null},
+    {"key": "AMD", "symbol": "AMD", "yahoo": "AMD", "name": "AMD", "exchange": "NASDAQ", "currency": "USD", "tv": "NASDAQ:AMD", "shares": null},
+    {"key": "BBAI", "symbol": "BBAI", "yahoo": "BBAI", "name": "BigBear.ai", "exchange": "NYSE", "currency": "USD", "tv": "NYSE:BBAI", "shares": null},
+    {"key": "PNG", "symbol": "PNG", "yahoo": "PNG.V", "name": "Kraken Robotics", "exchange": "TSXV", "currency": "CAD", "tv": "TSXV:PNG", "shares": null},
+    {"key": "AAPL", "symbol": "AAPL", "yahoo": "AAPL", "name": "Apple", "exchange": "NASDAQ", "currency": "USD", "tv": "NASDAQ:AAPL", "shares": null},
+    {"key": "BB", "symbol": "BB", "yahoo": "BB", "name": "BlackBerry", "exchange": "NYSE", "currency": "USD", "tv": "NYSE:BB", "shares": null},
+    {"key": "ICLN", "symbol": "ICLN", "yahoo": "ICLN", "name": "iShares Global Clean Energy", "exchange": "NASDAQ", "currency": "USD", "tv": "NASDAQ:ICLN", "shares": null}
+  ]
+}
