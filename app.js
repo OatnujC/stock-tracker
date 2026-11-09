@@ -219,7 +219,21 @@ function toggleSelection(key) {
   writeSelection();
   selectionChanged();
 }
+let ignoreClickUntil=0;
+function activateCard(event){
+  if (event.target.closest('a')) return false;
+  const card=event.target.closest('.stock-card');
+  if (!card) return false;
+  toggleSelection(card.dataset.key);
+  return true;
+}
+// Touch can synthesize a follow-up click; ignore that ghost click or selection toggles twice.
+$('watchlist').addEventListener('pointerup',event=>{
+  if (event.pointerType!=='touch' && event.pointerType!=='pen') return;
+  if (activateCard(event)) ignoreClickUntil=Date.now()+700;
+},{passive:true});
 $('watchlist').addEventListener('click',event=>{
+  if (Date.now()<ignoreClickUntil) { event.preventDefault(); event.stopPropagation(); return; }
   if (event.target.closest('a')) { event.stopPropagation(); return; }
   const card=event.target.closest('.stock-card');
   if (card) toggleSelection(card.dataset.key);
