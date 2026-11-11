@@ -83,6 +83,11 @@ publish_gh_pages() {
 
 {
   echo "---- $(date -u +'%Y-%m-%dT%H:%M:%SZ') London=$(date +'%Y-%m-%d %H:%M %Z') session=$in_session ----"
+  # Stay in step with GitHub: drop local data-only commits, keep code.
+  git fetch -q origin main gh-pages || true
+  if [[ -z "$(git log --format=%s origin/main..HEAD | grep -v '^data: refresh$' || true)" ]]; then
+    git reset -q --keep origin/main || true
+  fi
   python3 scripts/fetch_quotes.py
   if ! meaningful_change; then
     echo "no meaningful price change"
@@ -93,7 +98,7 @@ publish_gh_pages() {
     echo "no file change"; exit 0
   fi
   git -c user.email="jt@users.noreply.github.com" -c user.name="JT Chan" commit -m "data: refresh"
-  git push origin main
+  git push origin main || echo "WARN: main push failed; publishing site anyway"
   publish_gh_pages
   echo "pushed main=$(git rev-parse --short HEAD)"
 } >>"$LOG" 2>&1
