@@ -90,8 +90,9 @@ def main():
         jobs.extend(('holdings', key, symbol, period) for period in PERIODS)
     for key, (symbol, name, currency) in MARKETS.items():
         result['markets'][key] = {'symbol': symbol, 'name': name, 'currency': currency,
-                                  'exchange': None, 'price': None, 'previousClose': None, 'series': []}
-        jobs.append(('markets', key, symbol, 'intraday1d'))
+                                  'exchange': None, 'price': None, 'previousClose': None, 'series': [],
+                                  **{period: [] for period in PERIODS}}
+        jobs.extend(('markets', key, symbol, period) for period in PERIODS)
     for symbol, currency in FX.items():
         result['fx'][symbol] = {'symbol': symbol, 'currency': currency, 'exchange': None,
                                 'price': None, 'latest': None, 'previousClose': None, 'daily1y': []}
@@ -110,7 +111,9 @@ def main():
                 print(f'Unavailable {group}/{key}/{period}: {error}', file=sys.stderr)
                 continue
             target = result[group][key]
-            target['series' if group == 'markets' else period] = entry['series']
+            target[period] = entry['series']
+            if group == 'markets' and period == 'intraday1d':
+                target['series'] = entry['series']
             # Quote metadata comes from the shortest successful interval available.
             rank = list(PERIODS).index(period)
             if rank < target.get('_metaRank', 99):

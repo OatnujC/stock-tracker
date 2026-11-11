@@ -2,6 +2,7 @@
 
 const MARKETS = [['FTSE', 'FTSE 100'], ['GBPUSD', 'GBP/USD'], ['BTC', 'Bitcoin'], ['GOLD', 'Gold'], ['BRENT', 'Brent crude'], ['SPX', 'S&P 500'], ['IXIC', 'Nasdaq'], ['US10Y', 'US 10Y']];
 const COLORS = ['#2dd4bf', '#7eb5ff', '#c4a0ff', '#f2bd70', '#e6edf3', '#f184a0', '#86b88d'];
+const MARKET_COLORS = {FTSE:'#38bdf8', GBPUSD:'#a3e635', BTC:'#fb923c', GOLD:'#facc15', BRENT:'#e879f9', SPX:'#818cf8', IXIC:'#fb7185', US10Y:'#22d3ee'};
 const RANGES = ['1D', '5D', '14D', '30D', '365D', 'YTD'];
 const valid = n => typeof n === 'number' && Number.isFinite(n);
 const positive = n => valid(n) && n > 0;
@@ -24,7 +25,7 @@ const selected = new Set();
 let config = {baseCurrency:'GBP', holdings:[]}, market = {};
 
 function rangeSeries(quote) {
-  if (range === '1D') return points(quote?.intraday1d);
+  if (range === '1D') return points(quote?.intraday1d ?? quote?.series);
   if (range === '5D') return points(quote?.intraday5d);
   const now = new Date();
   const cutoff = range === 'YTD' ? Date.UTC(now.getUTCFullYear(), 0, 1)/1000 : now.getTime()/1000 - Number.parseInt(range, 10)*86400;
@@ -63,7 +64,8 @@ function renderMarkets() {
     const pct=valid(q?.price) && positive(q?.previousClose) ? (q.price/q.previousClose-1)*100 : null;
     let price=number(q?.price, key==='GBPUSD' ? 4 : key==='US10Y' ? 3 : 2);
     if (valid(q?.price)) { if (key==='US10Y') price+='%'; if (['BTC','GOLD','BRENT'].includes(key)) price='$'+price; }
-    return `<div class="market"><div class="market-name">${name}</div><div class="market-value">${price}</div><div class="market-change ${tone(pct)}">${valid(pct) ? `${pct>0?'↗':pct<0?'↘':'→'} ${pctLabel(pct)}` : '—'}</div></div>`;
+    const selectionKey=`m:${key}`, active=selected.has(selectionKey);
+    return `<div class="market${active?' selected':''}" data-key="${selectionKey}" tabindex="0" role="button" aria-pressed="${active}" aria-label="${escapeHTML(name)}"><span class="selection-check" aria-hidden="true">✓</span><div class="market-name">${name}</div><div class="market-value">${price}</div><div class="market-change ${tone(pct)}">${valid(pct) ? `${pct>0?'↗':pct<0?'↘':'→'} ${pctLabel(pct)}` : '—'}</div></div>`;
   }).join('');
   $('markets').setAttribute('aria-busy','false');
 }
@@ -121,18 +123,22 @@ function book() {
   let total=null;
   if (weighted) {
     const values=holdings.map(h=>convert(market.holdings?.[h.key]?.price,h.currency || market.holdings?.[h.key]?.currency || 'USD',target,0,'latest'));
-    if (values.every(positive)) total=values.reduce((sum,v,i)=>sum+v*holdings[i].shares,0);
+    if (holdings.length && values.every(positive)) total=values.reduce((sum,v,i)=>sum+v*holdings[i].shares,0);
   }
   return {weighted,target,lines,combined,total,fallback:fallback.filter(key=>!selected.size || selected.has(key)),available:available.length,count:basket.length};
 }
 function renderOverall() {
   const b=book(), result=b.combined.at(-1)?.c;
-  const label=selected.size ? `Selected: ${[...selected].join(', ')} (${selected.size})` : 'The whole book';
+  const marketLines=MARKETS.filter(([key])=>selected.has(`m:${key}`)).map(([key])=>{
+    const q=market.markets?.[key], series=rangeSeries(q), base=baseline(q,series);
+    return {key,selectionKey:`m:${key}`,color:MARKET_COLORS[key],series:series.length>=2 && positive(base) ? series.map(p=>({t:p.t,c:(p.c/base-1)*100})) : []};
+  });
+  const label=selected.size ? `Selected: ${[...selected].map(key=>key.startsWith('m:') ? MARKETS.find(([id])=>key===`m:${id}`)?.[1] || key : key).join(', ')} (${selected.size})` : 'The whole book';
   $('overall-subtitle').textContent=`${range} · ${label} · ${b.target} returns`;
   $('clear-selection').hidden=!selected.size;
   $('overall-headline').className=`overall-headline ${tone(result)}`;
   $('overall-headline').textContent=pctLabel(result);
-  if (b.weighted) {
+  if (b.weighted && b.count) {
     const small=document.createElement('small');
     small.textContent=`Total value: ${valid(b.total)?`${b.target} ${number(b.total)}`:'—'}`;
     $('overall-headline').append(small);
@@ -141,12 +147,21 @@ function renderOverall() {
   const notes=[];
   if (b.available<b.count) notes.push(`${b.available}/${b.count} holdings have usable ${range} history${b.weighted?'; Combined requires all holdings':'; equal-weighted over available holdings'}.`);
   if (b.fallback.length) notes.push(`FX missing for ${b.fallback.join(', ')}: using native % returns.`);
-  if (b.weighted && !valid(b.total)) notes.push('Total value unavailable: missing quote or FX.');
+  if (b.weighted && b.count && !valid(b.total)) notes.push('Total value unavailable: missing quote or FX.');
+  const missingMarkets=marketLines.filter(l=>!l.series.length);
+  if (missingMarkets.length) notes.push(`${missingMarkets.map(l=>l.key).join(', ')}: no usable ${range} history.`);
   notes.push('Historical FX uses the last available daily rate.');
   $('coverage-note').textContent=notes.join(' ');
-  $('legend').hidden=view!=='All';
-  $('legend').innerHTML=view==='All' ? b.lines.map(l=>`<button type="button" class="legend-item" data-key="${escapeHTML(l.key)}" aria-pressed="${!selected.size || selected.has(l.key)}"><span class="legend-dot" style="--line:${l.color}"></span>${escapeHTML(l.key)}<span class="legend-return">${pctLabel(l.series.at(-1)?.c)}</span></button>`).join('') : '';
-  drawChart(view==='Combined' ? [{key:'Combined',color:tone(result)==='negative'?'#f43f5e':'#2dd4bf',series:b.combined}] : b.lines.filter(l=>!selected.size || selected.has(l.key)));
+  const holdingLines=view==='Combined'
+    ? (b.count ? [{key:'Combined',color:tone(result)==='negative'?'#f43f5e':'#2dd4bf',series:b.combined}] : [])
+    : b.lines.filter(l=>!selected.size || selected.has(l.key));
+  const lines=[...holdingLines,...marketLines];
+  $('legend').hidden=view!=='All' && !marketLines.length;
+  $('legend').innerHTML=$('legend').hidden ? '' : lines.map(l=>{
+    const content=`<span class="legend-dot" style="--line:${l.color}"></span>${escapeHTML(l.key)}<span class="legend-return">${pctLabel(l.series.at(-1)?.c)}</span>`;
+    return l.key==='Combined' ? `<span class="legend-item">${content}</span>` : `<button type="button" class="legend-item" data-key="${escapeHTML(l.selectionKey || l.key)}" aria-pressed="true">${content}</button>`;
+  }).join('');
+  drawChart(lines);
 }
 function drawChart(lines) {
   const all=lines.flatMap(l=>l.series);
@@ -192,9 +207,9 @@ function render() {
 }
 $('range-controls').addEventListener('click',event=>{ const value=event.target.closest('[data-range]')?.dataset.range; if (RANGES.includes(value)) { range=value; save('jt-range',range); render(); } });
 $('view-controls').addEventListener('click',event=>{ const value=event.target.closest('[data-view]')?.dataset.view; if (['Combined','All'].includes(value)) { view=value; save('jt-view',view); renderOverall(); document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view))); } });
-// Update card state in place so keyboard focus survives selection changes.
+// Update tile state in place so keyboard focus survives selection changes.
 function selectionChanged() {
-  document.querySelectorAll('.stock-card').forEach(card=>{
+  document.querySelectorAll('.stock-card, #markets .market').forEach(card=>{
     const active=selected.has(card.dataset.key);
     card.classList.toggle('selected',active);
     card.setAttribute('aria-pressed',String(active));
@@ -204,11 +219,11 @@ function selectionChanged() {
 function writeSelection() {
   const params=new URLSearchParams(window.location.hash.slice(1));
   if (selected.size) params.set('sel',[...selected].join(',')); else params.delete('sel');
-  const hash=params.toString().replace(/%2C/gi,',');
+  const hash=params.toString().replace(/%2C/gi,',').replace(/%3A/gi,':');
   window.history.replaceState(null,'',`${window.location.pathname}${window.location.search}${hash?'#'+hash:''}`);
 }
 function readSelection() {
-  const keys=new Set(config.holdings.map(h=>h.key));
+  const keys=new Set([...config.holdings.map(h=>h.key), ...MARKETS.map(([key])=>`m:${key}`)]);
   const value=new URLSearchParams(window.location.hash.slice(1)).get('sel') || '';
   selected.clear();
   value.split(',').forEach(key=>{ if (keys.has(key)) selected.add(key); });
@@ -240,6 +255,21 @@ $('watchlist').addEventListener('click',event=>{
 });
 $('watchlist').addEventListener('keydown',event=>{
   if (!event.target.matches('.stock-card') || !['Enter',' '].includes(event.key)) return;
+  event.preventDefault();
+  if (!event.repeat) toggleSelection(event.target.dataset.key);
+});
+$('markets').addEventListener('pointerup',event=>{
+  if (event.pointerType!=='touch' && event.pointerType!=='pen') return;
+  const tile=event.target.closest('.market');
+  if (tile) { toggleSelection(tile.dataset.key); ignoreClickUntil=Date.now()+700; }
+},{passive:true});
+$('markets').addEventListener('click',event=>{
+  if (Date.now()<ignoreClickUntil) { event.preventDefault(); event.stopPropagation(); return; }
+  const tile=event.target.closest('.market');
+  if (tile) toggleSelection(tile.dataset.key);
+});
+$('markets').addEventListener('keydown',event=>{
+  if (!event.target.matches('.market') || !['Enter',' '].includes(event.key)) return;
   event.preventDefault();
   if (!event.repeat) toggleSelection(event.target.dataset.key);
 });
